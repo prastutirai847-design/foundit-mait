@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { HardDrive, LockKeyhole } from 'lucide-react'
+import { Database, LockKeyhole } from 'lucide-react'
 import { Logo } from './Logo'
 
 const exploreLinks = [  { label: 'Discover all items', to: '/' },
@@ -39,8 +39,8 @@ export function Footer() {
             <div className="mt-6 flex items-start gap-2.5 rounded-xl border border-white/10 bg-white/[0.04] p-3.5 text-[12px] leading-5 text-white/70">
               <LockKeyhole aria-hidden="true" size={15} className="mt-0.5 shrink-0 text-white/55" />
               <p>
-                Everything stays in this browser. Listings and requests are not shared with other
-                students or devices.
+                Reports and requests are stored in the FoundIt demo database, not in your browser.
+                This is a shared demo, not a verified campus service.
               </p>
             </div>
           </div>
@@ -103,11 +103,11 @@ export function Footer() {
         <div className="mt-12 flex flex-col gap-5 border-t border-white/10 pt-7 text-[12px] leading-5 text-white/60 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-2xl space-y-2">
             <p className="flex items-start gap-2">
-              <HardDrive aria-hidden="true" size={14} className="mt-0.5 shrink-0" />
+              <Database aria-hidden="true" size={14} className="mt-0.5 shrink-0" />
               <span>
-                FoundIt is a functional frontend prototype. Reports, images and claim requests are
-                stored only in this browser&apos;s local storage and can be lost if you clear site
-                data. Nothing is synced or verified.
+                FoundIt is a working prototype with a FastAPI demo backend and a SQLite database.
+                The demo identity is a plain request header and is not authentication. Handover
+                notes are only returned to the reporter or an approved claimant.
               </span>
             </p>
             <p>

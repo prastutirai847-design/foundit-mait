@@ -10,8 +10,8 @@ export class ImageProcessingError extends Error {
 }
 
 /**
- * Compresses an uploaded image into a reasonably sized JPEG data URL so a few
- * listings fit comfortably inside the browser's localStorage quota.
+ * Compresses an uploaded image into a reasonably sized JPEG data URL so the
+ * API payload and the stored listing stay small.
  */
 export async function prepareImage(file: File): Promise<string> {
   if (!ACCEPTED_TYPES.includes(file.type)) {

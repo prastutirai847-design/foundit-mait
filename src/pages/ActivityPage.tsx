@@ -5,10 +5,11 @@ import {
   ArrowUpRight,
   Check,
   ClipboardList,
+  Database,
   FileQuestion,
-  HardDrive,
   Inbox,
   Info,
+  Loader2,
   LockKeyhole,
   MapPin,
   MessageSquare,
@@ -19,6 +20,7 @@ import {
   X,
 } from 'lucide-react'
 import type { Claim, Listing } from '../types'
+import { getErrorMessage } from '../api/client'
 import { useFoundIt } from '../store/FoundItProvider'
 import { CATEGORY_MAP, LOCATION_MAP } from '../data/constants'
 import { usePageTitle } from '../hooks/usePageTitle'
@@ -30,6 +32,7 @@ import {
 import { ItemImage } from '../components/ItemImage'
 import { ClaimStatusBadge, SampleBadge, TypeBadge } from '../components/Badges'
 import { EmptyState } from '../components/EmptyState'
+import { PageError, PageLoading } from '../components/PageState'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { useToast } from '../components/Toast'
 
@@ -171,12 +174,14 @@ function ReportCard({
 function IncomingCard({
   claim,
   listing,
+  busy,
   onApprove,
   onReject,
   onReturn,
 }: {
   claim: Claim
   listing: Listing
+  busy: boolean
   onApprove: () => void
   onReject: () => void
   onReturn: () => void
@@ -230,8 +235,8 @@ function IncomingCard({
           </p>
           <p className="mt-1.5 text-[12.5px] leading-5 text-found">{listing.handover}</p>
           <p className="mt-2 text-[11px] leading-5 text-found/80">
-            This note is visible to the approved claimant in this browser. Arrange the handover in
-            person.
+            The approved claimant sees this note when they open the listing. Arrange the handover
+            in person.
           </p>
         </div>
       )}
@@ -247,15 +252,21 @@ function IncomingCard({
             <button
               type="button"
               onClick={onApprove}
-              className="btn btn-small bg-found text-white hover:bg-[#095544]"
+              disabled={busy}
+              className="btn btn-small bg-found text-white hover:bg-[#095544] disabled:opacity-60"
             >
-              <Check aria-hidden="true" size={13} strokeWidth={2.4} />
+              {busy ? (
+                <Loader2 aria-hidden="true" size={13} className="animate-spin" />
+              ) : (
+                <Check aria-hidden="true" size={13} strokeWidth={2.4} />
+              )}
               {isClaim ? 'Approve claim' : 'Approve lead'}
             </button>
             <button
               type="button"
               onClick={onReject}
-              className="btn-ghost btn-small hover:bg-[#FBEFED] hover:text-[#9A3B2C]"
+              disabled={busy}
+              className="btn-ghost btn-small hover:bg-[#FBEFED] hover:text-[#9A3B2C] disabled:opacity-60"
             >
               <X aria-hidden="true" size={13} />
               Decline
@@ -264,7 +275,12 @@ function IncomingCard({
         )}
 
         {claim.status === 'approved' && listing.status === 'open' && (
-          <button type="button" onClick={onReturn} className="btn btn-small bg-ink text-white hover:bg-ink-soft">
+          <button
+            type="button"
+            onClick={onReturn}
+            disabled={busy}
+            className="btn btn-small bg-ink text-white hover:bg-ink-soft disabled:opacity-60"
+          >
             <Check aria-hidden="true" size={13} strokeWidth={2.4} />
             Mark item returned
           </button>
@@ -373,11 +389,21 @@ function MyRequestCard({ claim, listing }: { claim: Claim; listing: Listing }) {
 
 export function ActivityPage() {
   usePageTitle('My activity')
-  const { listings, claims, setClaimStatus, markReturned, deleteListing } = useFoundIt()
+  const {
+    listings,
+    claims,
+    loading,
+    error,
+    refresh,
+    setClaimStatus,
+    markReturned,
+    deleteListing,
+  } = useFoundIt()
   const { toast } = useToast()
   const [searchParams, setSearchParams] = useSearchParams()
   const [reportFilter, setReportFilter] = useState<ReportFilter>('all')
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
+  const [busy, setBusy] = useState(false)
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({})
 
   const rawTab = searchParams.get('tab')
@@ -448,28 +474,43 @@ export function ActivityPage() {
     window.setTimeout(() => tabRefs.current[nextTab.id]?.focus(), 0)
   }
 
-  function approveRequest(claim: Claim) {
-    setClaimStatus(claim.id, 'approved')
-    toast(
-      claim.kind === 'claim'
-        ? 'Claim approved. Arrange the handover, then mark the item returned.'
-        : 'Lead approved. Arrange the handover, then mark the item returned.',
-    )
+  async function approveRequest(claim: Claim) {
+    if (busy) return
+    setBusy(true)
+    try {
+      await setClaimStatus(claim.id, 'approved')
+      toast(
+        claim.kind === 'claim'
+          ? 'Claim approved. Arrange the handover, then mark the item returned.'
+          : 'Lead approved. Arrange the handover, then mark the item returned.',
+      )
+    } catch (cause) {
+      toast(getErrorMessage(cause), 'error')
+    } finally {
+      setBusy(false)
+    }
   }
 
-  function confirmPendingAction() {
-    if (!pendingAction) return
-    if (pendingAction.kind === 'delete') {
-      deleteListing(pendingAction.listing.id)
-      toast('Report deleted.')
-    } else if (pendingAction.kind === 'return') {
-      markReturned(pendingAction.listing.id)
-      toast('Listing marked as returned.')
-    } else {
-      setClaimStatus(pendingAction.claim.id, 'rejected')
-      toast('Request declined.')
+  async function confirmPendingAction() {
+    if (!pendingAction || busy) return
+    setBusy(true)
+    try {
+      if (pendingAction.kind === 'delete') {
+        await deleteListing(pendingAction.listing.id)
+        toast('Report deleted.')
+      } else if (pendingAction.kind === 'return') {
+        await markReturned(pendingAction.listing.id)
+        toast('Listing marked as returned.')
+      } else {
+        await setClaimStatus(pendingAction.claim.id, 'rejected')
+        toast('Request declined.')
+      }
+      setPendingAction(null)
+    } catch (cause) {
+      toast(getErrorMessage(cause), 'error')
+    } finally {
+      setBusy(false)
     }
-    setPendingAction(null)
   }
 
   const confirmContent = (() => {
@@ -484,7 +525,7 @@ export function ActivityPage() {
     if (pendingAction.kind === 'delete') {
       return {
         title: 'Delete this report?',
-        description: `“${pendingAction.listing.name}” and every request attached to it will be removed from this browser. This cannot be undone.`,
+        description: `“${pendingAction.listing.name}” and every request attached to it will be permanently deleted from the demo database. This cannot be undone.`,
         confirmLabel: 'Delete report',
         tone: 'danger' as const,
       }
@@ -492,18 +533,32 @@ export function ActivityPage() {
     if (pendingAction.kind === 'return') {
       return {
         title: 'Mark this item as returned?',
-        description: `This closes “${pendingAction.listing.name}” and declines any other pending requests. You can still view the listing in this browser.`,
+        description: `This closes “${pendingAction.listing.name}” and declines any other pending requests. You can still view the listing.`,
         confirmLabel: 'Mark as returned',
         tone: 'primary' as const,
       }
     }
     return {
       title: 'Decline this request?',
-      description: `${pendingAction.claim.name} will see the request as declined in this browser. This cannot be undone.`,
+      description: `${pendingAction.claim.name} will see the request as declined. This cannot be undone.`,
       confirmLabel: 'Decline request',
       tone: 'danger' as const,
     }
   })()
+
+  if (loading && listings.length === 0 && claims.length === 0) {
+    return <PageLoading label="Loading your activity…" />
+  }
+
+  if (error && listings.length === 0 && claims.length === 0) {
+    return (
+      <PageError
+        title="Your activity could not load"
+        message={error}
+        onRetry={() => void refresh()}
+      />
+    )
+  }
 
   return (
     <div className="page-shell py-8 sm:py-11">
@@ -512,9 +567,9 @@ export function ActivityPage() {
           <p className="eyebrow">My activity</p>
           <h1 className="display-lg mt-2">Your corner of the board.</h1>
           <p className="mt-3 flex items-start gap-2 text-[12.5px] leading-5 text-ink-muted">
-            <HardDrive aria-hidden="true" size={13} className="mt-0.5 shrink-0 text-ink-faint" />
-            Reports and requests live only in this browser. Nothing here is synced with other
-            students or devices.
+            <Database aria-hidden="true" size={13} className="mt-0.5 shrink-0 text-ink-faint" />
+            Reports and requests are stored in the FoundIt demo database. Everyone running this
+            demo sees the same board.
           </p>
         </div>
         <Link to="/report" className="btn-primary w-fit shrink-0">
@@ -527,9 +582,10 @@ export function ActivityPage() {
         <div className="mt-6 flex items-start gap-2.5 rounded-2xl border border-line bg-[#FBF8F2] px-4 py-3.5">
           <Info aria-hidden="true" size={14} className="mt-0.5 shrink-0 text-ink-faint" />
           <p className="text-[11.5px] leading-5 text-ink-muted">
-            Sample reports and requests are included so you can try the full review flow. They are
-            labelled <span className="font-semibold text-ink-soft">Sample</span> and can be deleted
-            at any time.
+            Sample reports and requests are seeded into the demo database so the full review flow
+            can be tried immediately. They are labelled{' '}
+            <span className="font-semibold text-ink-soft">Sample</span>, and reports you own can be
+            deleted at any time.
           </p>
         </div>
       )}
@@ -719,7 +775,8 @@ export function ActivityPage() {
                       key={claim.id}
                       claim={claim}
                       listing={listing}
-                      onApprove={() => approveRequest(claim)}
+                      busy={busy}
+                      onApprove={() => void approveRequest(claim)}
                       onReject={() => setPendingAction({ kind: 'reject', claim, listing })}
                       onReturn={() => setPendingAction({ kind: 'return', listing })}
                     />
@@ -735,7 +792,7 @@ export function ActivityPage() {
             <div>
               <h2 className="text-[17px] font-semibold text-ink">My requests</h2>
               <p className="mt-1 text-[12.5px] text-ink-muted">
-                Claims and leads you have sent from this browser.
+                Claims and leads you have sent with the demo identity.
               </p>
             </div>
 
@@ -771,8 +828,9 @@ export function ActivityPage() {
         description={confirmContent.description}
         confirmLabel={confirmContent.confirmLabel}
         tone={confirmContent.tone}
+        busy={busy}
         onCancel={() => setPendingAction(null)}
-        onConfirm={confirmPendingAction}
+        onConfirm={() => void confirmPendingAction()}
       />
     </div>
   )

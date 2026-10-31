@@ -54,3 +54,14 @@ Desktop.ini
 *.tmp
 *.temp
 .cache/
+
+# Python / FastAPI backend
+__pycache__/
+*.py[cod]
+.venv/
+backend/.venv/
+.pytest_cache/
+backend/foundit.db
+backend/foundit.db-journal
+backend/foundit.db-wal
+backend/foundit.db-shm

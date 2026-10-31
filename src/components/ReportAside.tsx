@@ -1,4 +1,4 @@
-import { Check, Eye, HardDrive, LockKeyhole } from 'lucide-react'
+import { Check, Database, Eye, LockKeyhole } from 'lucide-react'
 
 const tips = [
   'Use a specific item name, not just “bottle”.',
@@ -51,8 +51,9 @@ export function ReportAside() {
       </section>
 
       <p className="flex items-start gap-2 px-1 text-[11.5px] leading-5 text-ink-faint">
-        <HardDrive aria-hidden="true" size={13} className="mt-0.5 shrink-0" />
-        This is a browser-local prototype. Reports are not visible to other students or devices.
+        <Database aria-hidden="true" size={13} className="mt-0.5 shrink-0" />
+        This demo is backed by a local FastAPI server. Listings are shared through its demo
+        database; handover notes are only returned to the reporter and approved claimants.
       </p>
     </div>
   )

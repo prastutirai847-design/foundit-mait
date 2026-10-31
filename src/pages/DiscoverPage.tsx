@@ -1,16 +1,18 @@
 import { useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
+  AlertTriangle,
   ArrowDown,
   ArrowUpRight,
   Check,
+  Database,
   Handshake,
-  HardDrive,
   MapPin,
   MessagesSquare,
   PackageOpen,
   PenLine,
   Plus,
+  RefreshCw,
   SearchX,
   ShieldCheck,
 } from 'lucide-react'
@@ -23,6 +25,7 @@ import { BrowseFilters } from '../components/BrowseFilters'
 import { ItemCard } from '../components/ItemCard'
 import { ItemImage } from '../components/ItemImage'
 import { EmptyState } from '../components/EmptyState'
+import { InlineLoading } from '../components/PageState'
 import { SampleBadge, TypeBadge } from '../components/Badges'
 import { usePageTitle } from '../hooks/usePageTitle'
 
@@ -51,7 +54,7 @@ const steps = [
 export function DiscoverPage() {
   usePageTitle()
 
-  const { listings } = useFoundIt()
+  const { listings, loading, error, refresh } = useFoundIt()
   const [searchParams, setSearchParams] = useSearchParams()
 
   const query = searchParams.get('q') ?? ''
@@ -213,6 +216,24 @@ export function DiscoverPage() {
                   Every request is reviewed by the reporter before a handover.
                 </p>
               </div>
+            ) : loading ? (
+              <div className="texture-paper flex min-h-[320px] flex-col items-center justify-center rounded-[28px] border border-line bg-surface p-8 shadow-lift">
+                <InlineLoading label="Loading the board…" />
+              </div>
+            ) : error ? (
+              <div className="texture-paper flex min-h-[320px] flex-col items-center justify-center rounded-[28px] border border-line bg-surface p-8 text-center shadow-lift">
+                <span className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[#EBD9B6] bg-[#FBF3E2] text-[#8A5A0A]">
+                  <AlertTriangle aria-hidden="true" size={24} />
+                </span>
+                <p className="mt-4 font-display text-[22px] text-ink">The board could not load</p>
+                <p className="mt-2 max-w-xs text-[13px] leading-6 text-ink-muted">
+                  The FoundIt demo API is not reachable right now.
+                </p>
+                <button type="button" onClick={() => void refresh()} className="btn-primary mt-5">
+                  <RefreshCw aria-hidden="true" size={15} />
+                  Try again
+                </button>
+              </div>
             ) : (
               <div className="texture-paper flex min-h-[320px] flex-col items-center justify-center rounded-[28px] border border-line bg-surface p-8 text-center shadow-lift">
                 <span className="flex h-14 w-14 items-center justify-center rounded-2xl border border-line bg-canvas text-ink-muted">
@@ -266,13 +287,13 @@ export function DiscoverPage() {
               Recent reports
             </h2>
             <p className="mt-2 max-w-xl text-[13.5px] leading-6 text-ink-muted">
-              Sample reports are included so you can explore. Anything you add is saved in this
-              browser only.
+              Sample reports are seeded so you can explore the full flow. Anything you add is stored
+              in the demo database and appears for everyone using this demo.
             </p>
           </div>
           <div className="inline-flex w-fit items-center gap-2 rounded-full border border-line bg-surface px-3.5 py-2 text-[11.5px] font-medium text-ink-muted">
-            <HardDrive aria-hidden="true" size={13} className="text-ink-faint" />
-            Browser-local prototype
+            <Database aria-hidden="true" size={13} className="text-ink-faint" />
+            Shared demo database
           </div>
         </div>
 
@@ -297,14 +318,27 @@ export function DiscoverPage() {
           <p className="text-[13px] text-ink-muted">
             Showing <span className="font-semibold text-ink">{filteredListings.length}</span>{' '}
             {filteredListings.length === 1 ? 'report' : 'reports'}
-            {hasFilters ? ' matching your filters' : ' from this browser'}
+            {hasFilters ? ' matching your filters' : ' on the demo board'}
           </p>
           <p aria-live="polite" className="sr-only">
             {filteredListings.length} {filteredListings.length === 1 ? 'report' : 'reports'} found.
           </p>
         </div>
 
-        {filteredListings.length > 0 ? (
+        {loading && listings.length === 0 ? (
+          <InlineLoading label="Loading reports…" />
+        ) : error && listings.length === 0 ? (
+          <EmptyState
+            icon={AlertTriangle}
+            title="The board could not load"
+            description={error}
+          >
+            <button type="button" onClick={() => void refresh()} className="btn-primary">
+              <RefreshCw aria-hidden="true" size={15} />
+              Try again
+            </button>
+          </EmptyState>
+        ) : filteredListings.length > 0 ? (
           <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {filteredListings.map((listing) => (
               <ItemCard key={listing.id} listing={listing} />
@@ -314,7 +348,7 @@ export function DiscoverPage() {
           <EmptyState
             icon={PackageOpen}
             title="The board is empty"
-            description="No reports have been added in this browser yet. Be the first to put a lost or found item on the board."
+            description="No reports are on the board yet. Be the first to put a lost or found item on it."
           >
             <Link to="/report" className="btn-primary">
               <Plus aria-hidden="true" size={16} />

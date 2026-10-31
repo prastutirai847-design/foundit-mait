@@ -1,11 +1,11 @@
 import { Outlet } from 'react-router-dom'
-import { AlertTriangle, X } from 'lucide-react'
+import { AlertTriangle, RefreshCw, X } from 'lucide-react'
 import { Header } from './Header'
 import { Footer } from './Footer'
 import { useFoundIt } from '../store/FoundItProvider'
 
 export function Layout() {
-  const { storageError, clearStorageError } = useFoundIt()
+  const { loading, error, clearError, refresh } = useFoundIt()
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -16,7 +16,16 @@ export function Layout() {
         Skip to content
       </a>
       <Header />
-      {storageError && (
+      {loading && (
+        <div
+          role="status"
+          aria-label="Talking to the FoundIt API"
+          className="h-0.5 w-full overflow-hidden bg-accent-soft"
+        >
+          <div className="h-full w-1/2 animate-pulse rounded-full bg-accent" />
+        </div>
+      )}
+      {error && (
         <div className="border-b border-[#EBD9B6] bg-[#FBF3E2]">
           <div className="page-shell flex items-start gap-3 py-3">
             <AlertTriangle
@@ -25,13 +34,21 @@ export function Layout() {
               className="mt-0.5 shrink-0 text-[#8A5A0A]"
             />
             <p role="alert" className="flex-1 text-[12.5px] leading-5 text-[#6F4A0C]">
-              {storageError}
+              {error}
             </p>
             <button
               type="button"
-              onClick={clearStorageError}
+              onClick={() => void refresh()}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-semibold text-[#8A5A0A] transition hover:bg-[#F5E7C8]"
+            >
+              <RefreshCw aria-hidden="true" size={12} />
+              Retry
+            </button>
+            <button
+              type="button"
+              onClick={clearError}
               className="rounded-full p-1 text-[#8A5A0A] transition hover:bg-[#F5E7C8]"
-              aria-label="Dismiss storage notice"
+              aria-label="Dismiss API notice"
             >
               <X aria-hidden="true" size={15} />
             </button>

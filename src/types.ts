@@ -61,7 +61,7 @@ export interface Claim {
   details: string
   createdAt: string
   status: ClaimStatus
-  /** True for requests submitted from this browser. */
+  /** True for requests submitted with the current demo identity. */
   submittedLocally: boolean
   isSample: boolean
   decidedAt?: string

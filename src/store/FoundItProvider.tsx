@@ -9,155 +9,132 @@ import {
   type ReactNode,
 } from 'react'
 import type { Claim, ClaimDraft, ClaimStatus, Listing, ListingDraft } from '../types'
+import { getErrorMessage } from '../api/client'
 import {
-  loadClaims,
-  loadListings,
-  persistClaims,
-  persistListings,
-  StorageWriteError,
-} from '../data/storage'
-import { createId } from '../utils/id'
+  approveClaim,
+  createClaim,
+  createListing,
+  deleteListing as deleteListingRequest,
+  fetchClaims,
+  fetchListings,
+  markListingReturned,
+  rejectClaim,
+  updateListing as updateListingRequest,
+} from '../api/foundit'
 
 interface FoundItContextValue {
   listings: Listing[]
   claims: Claim[]
-  storageError: string | null
-  clearStorageError: () => void
-  addListing: (draft: ListingDraft) => Listing
-  updateListing: (id: string, draft: ListingDraft) => void
-  deleteListing: (id: string) => void
-  markReturned: (id: string) => void
-  addClaim: (draft: ClaimDraft) => Claim
-  setClaimStatus: (claimId: string, status: Exclude<ClaimStatus, 'pending'>) => void
+  /** True while the first load or an explicit refresh is in flight. */
+  loading: boolean
+  /** Set when the API could not be reached or returned an error. */
+  error: string | null
+  clearError: () => void
+  refresh: () => Promise<void>
+  addListing: (draft: ListingDraft) => Promise<Listing>
+  updateListing: (id: string, draft: ListingDraft) => Promise<Listing>
+  deleteListing: (id: string) => Promise<void>
+  markReturned: (id: string) => Promise<Listing>
+  addClaim: (draft: ClaimDraft) => Promise<Claim>
+  setClaimStatus: (claimId: string, status: Exclude<ClaimStatus, 'pending'>) => Promise<void>
 }
 
 const FoundItContext = createContext<FoundItContextValue | null>(null)
 
-function loadInitialState() {
-  const listingsResult = loadListings()
-  const claimsResult = loadClaims()
-  const listingIds = new Set(listingsResult.data.map((listing) => listing.id))
-  const claims = claimsResult.data.filter((claim) => listingIds.has(claim.listingId))
-  const issues = [listingsResult.issue, claimsResult.issue].filter(Boolean) as string[]
-  return {
-    listings: listingsResult.data,
-    claims,
-    issue: issues.length ? Array.from(new Set(issues)).join(' ') : null,
-  }
-}
-
 export function FoundItProvider({ children }: { children: ReactNode }) {
-  const [initial] = useState(loadInitialState)
-  const [listings, setListings] = useState<Listing[]>(initial.listings)
-  const [claims, setClaims] = useState<Claim[]>(initial.claims)
-  const [storageError, setStorageError] = useState<string | null>(initial.issue)
+  const [listings, setListings] = useState<Listing[]>([])
+  const [claims, setClaims] = useState<Claim[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const hydrated = useRef(false)
+  // Guards against an older request resolving after a newer one.
+  const loadId = useRef(0)
+
+  const refresh = useCallback(async () => {
+    const id = loadId.current + 1
+    loadId.current = id
+    setLoading(true)
+    try {
+      const [nextListings, nextClaims] = await Promise.all([fetchListings(), fetchClaims()])
+      if (loadId.current !== id) return
+      setListings(nextListings)
+      setClaims(nextClaims)
+      setError(null)
+    } catch (cause) {
+      if (loadId.current !== id) return
+      setError(getErrorMessage(cause))
+    } finally {
+      if (loadId.current === id) setLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
-    if (!hydrated.current) {
-      hydrated.current = true
-      return
-    }
-    try {
-      persistListings(listings)
-      persistClaims(claims)
-    } catch (error) {
-      setStorageError(
-        error instanceof StorageWriteError
-          ? error.message
-          : 'Your change could not be saved in this browser.',
-      )
-    }
-  }, [listings, claims])
+    void refresh()
+  }, [refresh])
 
-  const addListing = useCallback((draft: ListingDraft): Listing => {
-    const listing: Listing = {
-      ...draft,
-      id: createId('listing'),
-      createdAt: new Date().toISOString(),
-      owner: 'me',
-      isSample: false,
-      status: 'open',
-    }
-    setListings((current) => [listing, ...current])
-    return listing
-  }, [])
-
-  const updateListing = useCallback((id: string, draft: ListingDraft) => {
-    setListings((current) =>
-      current.map((listing) =>
-        listing.id === id && listing.owner === 'me' ? { ...listing, ...draft } : listing,
-      ),
-    )
-  }, [])
-
-  const deleteListing = useCallback((id: string) => {
-    setListings((current) => current.filter((listing) => listing.id !== id))
-    setClaims((current) => current.filter((claim) => claim.listingId !== id))
-  }, [])
-
-  const markReturned = useCallback((id: string) => {
-    const decidedAt = new Date().toISOString()
-    setListings((current) =>
-      current.map((listing) =>
-        listing.id === id && listing.status === 'open'
-          ? { ...listing, status: 'returned', returnedAt: decidedAt }
-          : listing,
-      ),
-    )
-    setClaims((current) =>
-      current.map((claim) =>
-        claim.listingId === id && claim.status === 'pending'
-          ? { ...claim, status: 'rejected', decidedAt }
-          : claim,
-      ),
-    )
-  }, [])
-
-  const addClaim = useCallback((draft: ClaimDraft): Claim => {
-    const claim: Claim = {
-      ...draft,
-      id: createId('request'),
-      createdAt: new Date().toISOString(),
-      status: 'pending',
-      submittedLocally: true,
-      isSample: false,
-    }
-    setClaims((current) => [claim, ...current])
-    return claim
-  }, [])
-
-  const setClaimStatus = useCallback(
-    (claimId: string, status: Exclude<ClaimStatus, 'pending'>) => {
-      const decidedAt = new Date().toISOString()
-      setClaims((current) => {
-        const target = current.find((claim) => claim.id === claimId)
-        if (!target) return current
-        return current.map((claim) => {
-          if (claim.id === claimId) return { ...claim, status, decidedAt }
-          if (
-            status === 'approved' &&
-            claim.listingId === target.listingId &&
-            claim.status === 'pending'
-          ) {
-            return { ...claim, status: 'rejected', decidedAt }
-          }
-          return claim
-        })
-      })
+  const addListing = useCallback(
+    async (draft: ListingDraft) => {
+      const listing = await createListing(draft)
+      await refresh()
+      return listing
     },
-    [],
+    [refresh],
   )
 
-  const clearStorageError = useCallback(() => setStorageError(null), [])
+  const updateListing = useCallback(
+    async (id: string, draft: ListingDraft) => {
+      const listing = await updateListingRequest(id, draft)
+      await refresh()
+      return listing
+    },
+    [refresh],
+  )
+
+  const deleteListing = useCallback(
+    async (id: string) => {
+      await deleteListingRequest(id)
+      await refresh()
+    },
+    [refresh],
+  )
+
+  const markReturned = useCallback(
+    async (id: string) => {
+      const listing = await markListingReturned(id)
+      await refresh()
+      return listing
+    },
+    [refresh],
+  )
+
+  const addClaim = useCallback(
+    async (draft: ClaimDraft) => {
+      const claim = await createClaim(draft.listingId, draft)
+      await refresh()
+      return claim
+    },
+    [refresh],
+  )
+
+  const setClaimStatus = useCallback(
+    async (claimId: string, status: Exclude<ClaimStatus, 'pending'>) => {
+      if (status === 'approved') await approveClaim(claimId)
+      else await rejectClaim(claimId)
+      await refresh()
+    },
+    [refresh],
+  )
+
+  const clearError = useCallback(() => setError(null), [])
 
   const value = useMemo<FoundItContextValue>(
     () => ({
       listings,
       claims,
-      storageError,
-      clearStorageError,
+      loading,
+      error,
+      clearError,
+      refresh,
       addListing,
       updateListing,
       deleteListing,
@@ -168,8 +145,10 @@ export function FoundItProvider({ children }: { children: ReactNode }) {
     [
       listings,
       claims,
-      storageError,
-      clearStorageError,
+      loading,
+      error,
+      clearError,
+      refresh,
       addListing,
       updateListing,
       deleteListing,

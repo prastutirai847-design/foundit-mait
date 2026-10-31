@@ -15,21 +15,24 @@ import {
   Trash2,
 } from 'lucide-react'
 import { useFoundIt } from '../store/FoundItProvider'
+import { getErrorMessage } from '../api/client'
 import { CATEGORY_MAP, LOCATION_MAP } from '../data/constants'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { formatCalendarDate, formatDateTime, formatRelative } from '../utils/format'
 import { ItemImage } from '../components/ItemImage'
 import { ClaimStatusBadge, SampleBadge, TypeBadge } from '../components/Badges'
 import { EmptyState } from '../components/EmptyState'
+import { PageError, PageLoading } from '../components/PageState'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { useToast } from '../components/Toast'
 
 export function ItemDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { listings, claims, markReturned, deleteListing } = useFoundIt()
+  const { listings, claims, loading, error, refresh, markReturned, deleteListing } = useFoundIt()
   const { toast } = useToast()
   const [confirmAction, setConfirmAction] = useState<'returned' | 'delete' | null>(null)
+  const [busy, setBusy] = useState(false)
 
   const listing = listings.find((item) => item.id === id)
   usePageTitle(listing ? listing.name : 'Listing not found')
@@ -46,6 +49,20 @@ export function ItemDetailPage() {
     [claims, listing],
   )
 
+  if (!listing && loading) {
+    return <PageLoading label="Loading this report…" />
+  }
+
+  if (!listing && error) {
+    return (
+      <PageError
+        title="This report could not load"
+        message={error}
+        onRetry={() => void refresh()}
+      />
+    )
+  }
+
   if (!listing) {
     return (
       <div className="page-shell py-16 sm:py-24">
@@ -53,7 +70,7 @@ export function ItemDetailPage() {
           icon={FileQuestion}
           title="This listing is no longer here"
           headingLevel={1}
-          description="It may have been deleted from this browser, or the link may be incomplete. Everything on FoundIt is stored locally, so listings can disappear if site data is cleared."
+          description="It may have been deleted, or the link may be incomplete."
         >
           <Link to="/" className="btn-primary">
             Back to Discover
@@ -80,6 +97,33 @@ export function ItemDetailPage() {
       toast('Listing link copied.')
     } catch {
       toast('Could not copy the link. You can copy it from the address bar.', 'error')
+    }
+  }
+
+  const handleMarkReturned = async () => {
+    setBusy(true)
+    try {
+      await markReturned(listing.id)
+      setConfirmAction(null)
+      toast('Listing marked as returned.')
+    } catch (cause) {
+      toast(getErrorMessage(cause), 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    setBusy(true)
+    try {
+      await deleteListing(listing.id)
+      setConfirmAction(null)
+      toast('Report deleted.')
+      navigate('/activity?tab=reports')
+    } catch (cause) {
+      toast(getErrorMessage(cause), 'error')
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -210,8 +254,8 @@ export function ItemDetailPage() {
 
           {listing.isSample && (
             <p className="mt-4 rounded-xl border border-line bg-[#FBF8F2] px-3.5 py-3 text-[11.5px] leading-5 text-ink-muted">
-              This is a sample report included with the FoundIt prototype. It was created for
-              demonstration and is stored only in this browser.
+              This is a sample report seeded into the FoundIt demo database. It exists so the full
+              review flow can be explored without inventing a real listing.
             </p>
           )}
 
@@ -361,28 +405,21 @@ export function ItemDetailPage() {
         title="Mark this item as returned?"
         description="This closes the listing, marks it as returned and declines any other pending requests. You can still view it in My activity."
         confirmLabel="Mark as returned"
+        busy={busy}
         onCancel={() => setConfirmAction(null)}
-        onConfirm={() => {
-          markReturned(listing.id)
-          setConfirmAction(null)
-          toast('Listing marked as returned.')
-        }}
+        onConfirm={() => void handleMarkReturned()}
       />
 
       <ConfirmDialog
         open={confirmAction === 'delete'}
         title="Delete this report?"
-        description="The listing and all its requests will be removed from this browser. This cannot be undone."
+        description="The listing and all its requests will be permanently deleted from the demo database. This cannot be undone."
         confirmLabel="Delete report"
         cancelLabel="Keep report"
         tone="danger"
+        busy={busy}
         onCancel={() => setConfirmAction(null)}
-        onConfirm={() => {
-          deleteListing(listing.id)
-          setConfirmAction(null)
-          toast('Report deleted.')
-          navigate('/activity?tab=reports')
-        }}
+        onConfirm={() => void handleDelete()}
       />
 
     </div>

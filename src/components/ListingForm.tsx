@@ -23,6 +23,7 @@ import type {
   LocationId,
 } from '../types'
 import { CATEGORIES, LOCATIONS } from '../data/constants'
+import { getErrorMessage } from '../api/client'
 import { describedBy, FormField } from './FormField'
 import { isFutureCalendarDate, todayISO } from '../utils/format'
 import { ImageProcessingError, prepareImage } from '../utils/image'
@@ -51,8 +52,9 @@ type FormErrors = Partial<
 >
 
 const NAME_HINT = 'Keep it specific — “navy blue water bottle” beats “bottle”.'
-const HANDOVER_HINT = 'Private: only you and a claimant you approve can see this in this browser. Never posted publicly.'
-const IMAGE_HINT = 'A clear photo helps people recognise the item. Images stay in this browser.'
+const HANDOVER_HINT =
+  'Private: only you and a claimant you approve can see this. Never posted publicly.'
+const IMAGE_HINT = 'A clear photo helps people recognise the item. It is stored with your report.'
 
 const ERROR_FOCUS: Record<keyof FormErrors, string> = {
   name: 'report-name',
@@ -199,10 +201,11 @@ export function ListingForm({ initial, submitLabel, cancelTo, onSubmit }: Listin
     setSubmitting(true)
     setSubmitError(null)
     try {
-      await new Promise((resolve) => window.setTimeout(resolve, 380))
       await onSubmit(draft)
-    } catch {
-      setSubmitError('The report could not be saved. Please try again.')
+    } catch (error) {
+      setSubmitError(
+        getErrorMessage(error) || 'The report could not be saved. Please try again.',
+      )
       setSubmitting(false)
     }
   }
@@ -520,7 +523,7 @@ export function ListingForm({ initial, submitLabel, cancelTo, onSubmit }: Listin
           <span aria-hidden="true" className="text-accent">
             *
           </span>{' '}
-          Required fields · Saved only in this browser
+          Required fields · Saved to the demo server
         </p>
         <div className="flex flex-col-reverse gap-2.5 sm:flex-row sm:items-center">
           <Link to={cancelTo} className="btn-ghost justify-center py-2.5 text-[13px]">

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, Check, HardDrive, MapPin, Plus } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, Database, MapPin, Plus } from 'lucide-react'
 import type { Listing } from '../types'
 import { useFoundIt } from '../store/FoundItProvider'
 import { usePageTitle } from '../hooks/usePageTitle'
@@ -71,8 +71,8 @@ function SuccessPanel({ listing, onReset }: { listing: Listing; onReset: () => v
           </button>
 
           <p className="mt-6 flex items-center justify-center gap-1.5 border-t border-line pt-4 text-[11.5px] text-ink-faint">
-            <HardDrive aria-hidden="true" size={12} />
-            Saved only in this browser. Other students cannot see it.
+            <Database aria-hidden="true" size={12} />
+            Saved to the demo database. Anyone using this demo can see the listing.
           </p>
         </div>
         <p className="mt-4 text-center text-[12px] text-ink-faint">
@@ -108,8 +108,8 @@ export function ReportPage() {
         <p className="eyebrow">Report an item</p>
         <h1 className="display-lg mt-2">Put it on the board.</h1>
         <p className="mt-3 text-[14px] leading-6 text-ink-muted">
-          A few clear details go a long way. Your report is saved in this browser and appears in
-          Discover right away.
+          A few clear details go a long way. Your report is saved to the FoundIt demo API and appears
+          in Discover right away.
         </p>
       </div>
 
@@ -118,8 +118,8 @@ export function ReportPage() {
           <ListingForm
             submitLabel="Publish report"
             cancelTo="/"
-            onSubmit={(draft) => {
-              const listing = addListing(draft)
+            onSubmit={async (draft) => {
+              const listing = await addListing(draft)
               setCreated(listing)
               window.scrollTo(0, 0)
             }}

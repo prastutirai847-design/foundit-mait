@@ -12,12 +12,14 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import type { Claim } from '../types'
+import { getErrorMessage } from '../api/client'
 import { useFoundIt } from '../store/FoundItProvider'
 import { CATEGORY_MAP, LOCATION_MAP } from '../data/constants'
 import { usePageTitle } from '../hooks/usePageTitle'
 import { ItemImage } from '../components/ItemImage'
 import { ClaimStatusBadge, TypeBadge } from '../components/Badges'
 import { EmptyState } from '../components/EmptyState'
+import { PageError, PageLoading } from '../components/PageState'
 import { FormField, describedBy } from '../components/FormField'
 import { formatDateTime } from '../utils/format'
 
@@ -37,7 +39,7 @@ const ERROR_FOCUS: Record<keyof FormState, string> = {
 
 export function ClaimPage() {
   const { id } = useParams()
-  const { listings, claims, addClaim } = useFoundIt()
+  const { listings, claims, loading, error, refresh, addClaim } = useFoundIt()
   const listing = listings.find((item) => item.id === id)
   const [form, setForm] = useState<FormState>({ name: '', reason: '', details: '' })
   const [errors, setErrors] = useState<FormErrors>({})
@@ -57,6 +59,20 @@ export function ClaimPage() {
         : 'Request unavailable',
   )
 
+  if (!listing && loading) {
+    return <PageLoading label="Loading this report…" />
+  }
+
+  if (!listing && error) {
+    return (
+      <PageError
+        title="This report could not load"
+        message={error}
+        onRetry={() => void refresh()}
+      />
+    )
+  }
+
   if (!listing) {
     return (
       <div className="page-shell py-16 sm:py-24">
@@ -64,7 +80,7 @@ export function ClaimPage() {
           icon={FileQuestion}
           title="This listing is no longer here"
           headingLevel={1}
-          description="It may have been deleted from this browser, or the link may be incomplete."
+          description="It may have been deleted, or the link may be incomplete."
         >
           <Link to="/" className="btn-primary">
             Back to Discover
@@ -111,7 +127,7 @@ export function ClaimPage() {
             </div>
             <p className="mt-6 flex items-center justify-center gap-1.5 border-t border-line pt-4 text-[11.5px] leading-5 text-ink-faint">
               <LockKeyhole aria-hidden="true" size={12} className="shrink-0" />
-              This request is stored in this browser. The reporter is not notified outside it.
+              This request is saved to the demo database. Only the reporter can review it.
             </p>
           </div>
         </div>
@@ -249,8 +265,7 @@ export function ClaimPage() {
     setSubmitting(true)
     setSubmitError(null)
     try {
-      await new Promise((resolve) => window.setTimeout(resolve, 420))
-      const claim = addClaim({
+      const claim = await addClaim({
         listingId,
         kind: isClaim ? 'claim' : 'lead',
         name: form.name.trim(),
@@ -259,8 +274,8 @@ export function ClaimPage() {
       })
       setSubmitted(claim)
       window.scrollTo(0, 0)
-    } catch {
-      setSubmitError('The request could not be saved. Please try again.')
+    } catch (error) {
+      setSubmitError(getErrorMessage(error))
       setSubmitting(false)
     }
   }
@@ -361,7 +376,7 @@ export function ClaimPage() {
               label="Your name"
               required
               error={errors.name}
-              hint="Only the reporter sees this, in My activity on this browser."
+              hint="Only the reporter sees this in My activity."
             >
               <input
                 id="claim-name"
@@ -373,7 +388,7 @@ export function ClaimPage() {
                 autoComplete="name"
                 placeholder="e.g. Ananya Sharma"
                 aria-invalid={Boolean(errors.name)}
-                aria-describedby={describedBy('claim-name', errors.name, 'Only the reporter sees this, in My activity on this browser.')}
+                aria-describedby={describedBy('claim-name', errors.name, 'Only the reporter sees this in My activity.')}
                 className="field-control"
               />
             </FormField>
@@ -425,8 +440,8 @@ export function ClaimPage() {
             <div className="rounded-xl border border-line bg-[#FBF8F2] p-3.5">
               <p className="flex items-start gap-2 text-[11.5px] leading-5 text-ink-muted">
                 <LockKeyhole aria-hidden="true" size={12} className="mt-0.5 shrink-0" />
-                Your name and note are shown to the reporter in My activity in this browser. They
-                are not posted publicly or shared outside this device.
+                Your name and note are shown only to the reporter in My activity. They are not
+                posted publicly.
               </p>
             </div>
 

@@ -5,16 +5,31 @@ import { usePageTitle } from '../hooks/usePageTitle'
 import { ListingForm } from '../components/ListingForm'
 import { ReportAside } from '../components/ReportAside'
 import { EmptyState } from '../components/EmptyState'
+import { PageError, PageLoading } from '../components/PageState'
 import { useToast } from '../components/Toast'
 
 export function EditListingPage() {
   const { id } = useParams()
-  const { listings, updateListing } = useFoundIt()
+  const { listings, loading, error, refresh, updateListing } = useFoundIt()
   const { toast } = useToast()
   const navigate = useNavigate()
   const listing = listings.find((item) => item.id === id)
 
   usePageTitle(listing ? `Edit ${listing.name}` : 'Report unavailable')
+
+  if (!listing && loading) {
+    return <PageLoading label="Loading this report…" />
+  }
+
+  if (!listing && error) {
+    return (
+      <PageError
+        title="This report could not load"
+        message={error}
+        onRetry={() => void refresh()}
+      />
+    )
+  }
 
   if (!listing) {
     return (
@@ -23,7 +38,7 @@ export function EditListingPage() {
           icon={FileQuestion}
           title="That report isn't here"
           headingLevel={1}
-          description="It may have been deleted in this browser, or the link is incomplete."
+          description="It may have been deleted, or the link is incomplete."
         >
           <Link to="/" className="btn-primary">
             Back to Discover
@@ -78,8 +93,8 @@ export function EditListingPage() {
             initial={listing}
             submitLabel="Save changes"
             cancelTo={`/items/${listing.id}`}
-            onSubmit={(draft) => {
-              updateListing(listing.id, draft)
+            onSubmit={async (draft) => {
+              await updateListing(listing.id, draft)
               toast('Report updated.')
               navigate(`/items/${listing.id}`)
             }}

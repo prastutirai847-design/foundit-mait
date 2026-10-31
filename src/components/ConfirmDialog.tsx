@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { Loader2 } from 'lucide-react'
 
 interface ConfirmDialogProps {
   open: boolean
@@ -7,6 +8,7 @@ interface ConfirmDialogProps {
   confirmLabel: string
   cancelLabel?: string
   tone?: 'primary' | 'danger'
+  busy?: boolean
   onConfirm: () => void
   onCancel: () => void
 }
@@ -18,6 +20,7 @@ export function ConfirmDialog({
   confirmLabel,
   cancelLabel = 'Cancel',
   tone = 'primary',
+  busy = false,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -37,10 +40,10 @@ export function ConfirmDialog({
       aria-describedby="confirm-dialog-description"
       onCancel={(event) => {
         event.preventDefault()
-        onCancel()
+        if (!busy) onCancel()
       }}
       onClick={(event) => {
-        if (event.target === dialogRef.current) onCancel()
+        if (event.target === dialogRef.current && !busy) onCancel()
       }}
       className="m-auto w-[min(92vw,440px)] rounded-3xl border border-line bg-surface p-0 text-ink shadow-lift backdrop:bg-[#101826]/45 backdrop:backdrop-blur-[2px]"
     >
@@ -59,7 +62,12 @@ export function ConfirmDialog({
             {description}
           </p>
           <div className="mt-6 flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end">
-            <button type="button" className="btn-secondary py-2.5 text-[13px]" onClick={onCancel}>
+            <button
+              type="button"
+              className="btn-secondary py-2.5 text-[13px]"
+              onClick={onCancel}
+              disabled={busy}
+            >
               {cancelLabel}
             </button>
             <button
@@ -70,8 +78,16 @@ export function ConfirmDialog({
                   : 'bg-accent hover:bg-accent-dark'
               }`}
               onClick={onConfirm}
+              disabled={busy}
             >
-              {confirmLabel}
+              {busy ? (
+                <>
+                  <Loader2 aria-hidden="true" size={14} className="animate-spin" />
+                  Working…
+                </>
+              ) : (
+                confirmLabel
+              )}
             </button>
           </div>
         </div>

@@ -31,8 +31,8 @@ export class AppErrorBoundary extends Component<Props, State> {
           </span>
           <h1 className="mt-5 font-display text-[28px] text-ink">Something went sideways</h1>
           <p className="mt-3 text-[14px] leading-6 text-ink-muted">
-            FoundIt hit an unexpected error. Your saved listings are still in this browser — reload
-            to pick up where you left off.
+            FoundIt hit an unexpected error. Your saved listings are still in the demo database —
+            reload to pick up where you left off.
           </p>
           <button
             type="button"
