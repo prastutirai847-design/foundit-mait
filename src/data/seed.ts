@@ -1,0 +1,177 @@
+import type { Claim, Listing } from '../types'
+
+/**
+ * Sample data is clearly marked as demo content throughout the UI.
+ * Two reports are owned by "you" so the claim review flow can be tried
+ * immediately, along with two sample incoming requests.
+ */
+export const SAMPLE_LISTINGS: Listing[] = [
+  {
+    id: 'sample-headphones',
+    type: 'found',
+    name: 'Black over-ear headphones',
+    category: 'electronics',
+    description:
+      'Found a pair of matte black over-ear headphones on the window-side desk in Computer Lab 2, Academic Block C, after the 3 PM lab. They were folded but not in a case. I have kept them with me and will hand them over once someone describes them accurately.',
+    location: 'computer-labs',
+    eventDate: '2026-10-29',
+    createdAt: '2026-10-30T09:25:00+05:30',
+    image: '/images/items/headphones.jpg',
+    imageAlt: 'Matte black wireless over-ear headphones resting on a cream fabric surface',
+    handover: 'Library entrance, weekdays between 2 and 4 PM. Please describe the headphones before the handover.',
+    owner: 'me',
+    isSample: true,
+    status: 'open',
+  },
+  {
+    id: 'sample-calculator',
+    type: 'lost',
+    name: 'Black scientific calculator',
+    category: 'electronics',
+    description:
+      'Left my black scientific calculator behind after the 11 AM maths tutorial in Classroom C-204. It has a small white sticker on the back and my initials written in marker inside the slide cover. Please reach out if you have seen it.',
+    location: 'classrooms',
+    eventDate: '2026-10-29',
+    createdAt: '2026-10-30T08:10:00+05:30',
+    image: '/images/items/calculator.jpg',
+    imageAlt: 'Black scientific calculator on a light wooden desk',
+    handover: 'Can collect from C-204 after any weekday class, or meet near the canteen at lunch.',
+    owner: 'demo',
+    isSample: true,
+    status: 'open',
+  },
+  {
+    id: 'sample-backpack',
+    type: 'found',
+    name: 'Charcoal canvas backpack',
+    category: 'bags',
+    description:
+      'A grey charcoal backpack was left on a bench near the canteen seating area during the afternoon break. It contains notebooks and a lunch box, but no ID was visible. I left it with the canteen counter for now.',
+    location: 'canteen',
+    eventDate: '2026-10-29',
+    createdAt: '2026-10-29T18:40:00+05:30',
+    image: '/images/items/backpack.jpg',
+    imageAlt: 'Charcoal grey canvas backpack on a pale concrete bench',
+    handover: 'Ask at the canteen counter after 1 PM, then message me to confirm the details.',
+    owner: 'demo',
+    isSample: true,
+    status: 'open',
+  },
+  {
+    id: 'sample-bottle',
+    type: 'found',
+    name: 'Steel water bottle with black cap',
+    category: 'bottles-flasks',
+    description:
+      'Found a brushed steel water bottle with a matte black cap on the sports ground boundary wall after evening practice. There is a small dent near the base. It is with the sports office right now.',
+    location: 'sports-area',
+    eventDate: '2026-10-29',
+    createdAt: '2026-10-29T17:05:00+05:30',
+    image: '/images/items/bottle.jpg',
+    imageAlt: 'Brushed stainless steel water bottle with a matte black cap',
+    handover: 'Collect from the sports office between 4 and 6 PM. I can meet by the court if that is easier.',
+    owner: 'demo',
+    isSample: true,
+    status: 'open',
+  },
+  {
+    id: 'sample-notebook',
+    type: 'lost',
+    name: 'Spiral notebook — data structures',
+    category: 'books-stationery',
+    description:
+      'Lost my navy spiral notebook with handwritten data structures notes and a few pasted diagrams. It was in the library reading room on Tuesday afternoon, maybe at the second table from the window. My name is written on the inside cover.',
+    location: 'library',
+    eventDate: '2026-10-27',
+    createdAt: '2026-10-28T10:15:00+05:30',
+    image: '/images/items/notebook.jpg',
+    imageAlt: 'Navy spiral notebook open with graph paper pages and a black pen',
+    handover: 'If you find it, drop it at the library front desk or message me to meet on campus.',
+    owner: 'me',
+    isSample: true,
+    status: 'open',
+  },
+  {
+    id: 'sample-wallet',
+    type: 'lost',
+    name: 'Brown leather bifold wallet',
+    category: 'wallets-ids',
+    description:
+      'Lost a brown leather bifold wallet somewhere between the parking area and Academic Block A on Monday morning. It holds my college ID, metro card and a few receipts. Please do not share the ID details publicly — just let me know where I can collect it.',
+    location: 'parking-area',
+    eventDate: '2026-10-26',
+    createdAt: '2026-10-27T09:30:00+05:30',
+    image: '/images/items/wallet.jpg',
+    imageAlt: 'Brown leather bifold wallet on a textured concrete block',
+    handover: 'Please hand it to the Block A security desk, or message me to meet near the main gate.',
+    owner: 'demo',
+    isSample: true,
+    status: 'open',
+  },
+  {
+    id: 'sample-keys',
+    type: 'found',
+    name: 'Two brass keys on a leather ring',
+    category: 'keys',
+    description:
+      'Found two brass keys on a small dark leather ring in the library reading room. One key has a blue rubber cap. I handed them to the library desk, and the owner has since collected them.',
+    location: 'library',
+    eventDate: '2026-10-26',
+    createdAt: '2026-10-27T12:00:00+05:30',
+    image: '/images/items/keys.jpg',
+    imageAlt: 'Two brass keys on a dark leather keyring beside a book',
+    handover: 'Returned to the library front desk. This listing is closed.',
+    owner: 'demo',
+    isSample: true,
+    status: 'returned',
+    returnedAt: '2026-10-28T16:20:00+05:30',
+  },
+  {
+    id: 'sample-earbuds',
+    type: 'lost',
+    name: 'White wireless earbuds in charging case',
+    category: 'electronics',
+    description:
+      'Missed a white earbuds case after the cultural committee meeting in the auditorium on Saturday. The case has a small blue star sticker on the lid and one earbud has a tiny scratch near the stem. I can verify ownership with the serial number.',
+    location: 'auditorium',
+    eventDate: '2026-10-25',
+    createdAt: '2026-10-26T19:45:00+05:30',
+    image: '/images/items/earbuds.jpg',
+    imageAlt: 'White wireless earbuds in an open charging case on an indigo seat',
+    handover: 'Meet near the auditorium lobby on weekdays. Please describe the sticker before handing them over.',
+    owner: 'demo',
+    isSample: true,
+    status: 'open',
+  },
+]
+
+export const SAMPLE_CLAIMS: Claim[] = [
+  {
+    id: 'sample-claim-headphones',
+    listingId: 'sample-headphones',
+    kind: 'claim',
+    name: 'Ishaan Kapoor',
+    reason:
+      'I think these are the headphones I lost in Computer Lab 2 last week. I was sitting by the window during the 3 PM lab on Thursday.',
+    details:
+      'The left earcup has a faint scuff near the hinge and the headband is slightly stretched. I can also describe the cable that was with them.',
+    createdAt: '2026-10-30T12:15:00+05:30',
+    status: 'pending',
+    submittedLocally: false,
+    isSample: true,
+  },
+  {
+    id: 'sample-lead-notebook',
+    listingId: 'sample-notebook',
+    kind: 'lead',
+    name: 'Sneha Rao',
+    reason:
+      'I think I saw this notebook in the library reading room on Tuesday afternoon.',
+    details:
+      'It was on the second table from the window, navy cover with a white spiral. Someone moved it to the return trolley around 5 PM.',
+    createdAt: '2026-10-28T17:50:00+05:30',
+    status: 'pending',
+    submittedLocally: false,
+    isSample: true,
+  },
+]
