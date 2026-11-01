@@ -40,6 +40,8 @@ app.add_middleware(
         "http://127.0.0.1:5173",
         "http://localhost:5180",
         "http://127.0.0.1:5180",
+        "https://foundit-mait.vercel.app",
+        "https://foundit-mait-74ql8fgw3-prastutirai847-design.vercel.app",
     ],
     # This also covers Vite when it falls back to another localhost port.
     allow_origin_regex=r"http://(localhost|127\.0\.0\.1):\d+",
