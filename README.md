@@ -19,6 +19,7 @@ FoundIt explores a calmer workflow:
 ## Key features
 
 - **Discover board** with recent reports, featured item, and a responsive card grid.
+- **Demo sign-in page** for choosing or switching the demo identity used for reports and requests.
 - **Search and filters** across item name, description, category, campus location, and report type.
 - **Lost and found reporting** with validation, date checks, and campus-specific locations.
 - **Image upload** with preview and client-side compression before upload.
@@ -33,11 +34,22 @@ FoundIt explores a calmer workflow:
 - **Loading, error, empty, and success states** across the app.
 - **Accessible, mobile-first interface** with keyboard navigation, visible focus, semantic markup, and reduced-motion support.
 
-## Demo identity (not authentication)
+## Demo identity and sign-in (not authentication)
 
-The app does **not** implement real accounts or verified MAIT identities. Every request sends a spoofable `X-Demo-User` header. The frontend always sends `demo-me`; the seed data also uses `demo-owner`, `demo-ishaan`, and `demo-sneha`.
+The app does **not** implement real accounts, passwords, or verified MAIT identities. Opening the app redirects to `/login`, where you choose a demo username (3–40 letters, numbers, underscores or hyphens). That username is stored in this browser under `foundit.demo-user.v1` and sent with every API request as the spoofable `X-Demo-User` header.
 
-The backend still enforces ownership and claim rules against that header:
+The sign-in page offers four seeded demo identities:
+
+| Demo username | Sees |
+| --- | --- |
+| `demo-me` | The seeded headphones and notebook reports, plus both sample requests |
+| `demo-owner` | The other six seeded reports, with no incoming requests |
+| `demo-ishaan` | Their pending claim on the black headphones under My requests |
+| `demo-sneha` | Their pending lead on the spiral notebook under My requests |
+
+You can also type a new username to start with an empty activity list. The header shows the active identity; use it to return to the sign-in page to switch or sign out.
+
+The backend enforces ownership and claim rules against the header:
 
 - Only the reporter can edit, delete, or mark a listing returned.
 - A student cannot claim their own listing.
@@ -45,7 +57,7 @@ The backend still enforces ownership and claim rules against that header:
 - Approving one request rejects the other pending requests.
 - Handover notes are omitted from public listing responses.
 
-This demonstrates the authorization flow, but anyone can send a different header value. Do not treat it as secure or production-ready.
+This demonstrates the authorization flow, but anyone can send a different header value, and no password is requested. Do not treat it as secure or production-ready.
 
 ## Technology stack
 
@@ -89,13 +101,14 @@ The only network calls are to the local FastAPI server. There are no third-party
 ├── public/
 │   ├── favicon.svg
 │   ├── icons.svg
-│   └── images/items/            # Bundled sample item photography
+│   └── images/items/            # AI-generated seller-style demo photos
 ├── src/
 │   ├── api/                     # API client and DTO mapping
+│   ├── auth/                    # Demo identity storage and React provider
 │   ├── components/              # Reusable UI, forms, navigation and dialogs
 │   ├── data/                    # Categories, locations and legacy seed helpers
 │   ├── hooks/
-│   ├── pages/
+│   ├── pages/                   # Includes the demo sign-in page
 │   ├── store/                   # Async API-backed React context
 │   ├── utils/
 │   ├── App.tsx
@@ -169,6 +182,8 @@ npm run dev
 
 Vite prints a local URL, typically `http://localhost:5173`. The API base URL defaults to `http://127.0.0.1:8000/api`; copy `.env.example` to `.env` only if your backend runs elsewhere.
 
+Open the app and choose a demo identity on the sign-in page. Use `demo-me` to see the seeded reporter flow (two reports and two incoming requests) or `demo-ishaan` / `demo-sneha` to see a claimant's view. You can sign out or switch identity at any time from the account chip in the header.
+
 ```bash
 # .env
 VITE_API_BASE_URL=http://127.0.0.1:8000/api
@@ -205,7 +220,7 @@ All routes are prefixed with `/api`. Methods that change data require an `X-Demo
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
-| `GET` | `/api/health` | Health check and current counts |
+| `GET` | `/api/health` | Health check |
 | `GET` | `/api/listings` | List all reports; handover included only for the reporter or approved claimant |
 | `GET` | `/api/listings/{id}` | One report with the same handover rule |
 | `POST` | `/api/listings` | Create a report (`201`) |
@@ -255,6 +270,7 @@ Database constraints enforce one request per demo identity per listing, at most 
 ## Data and privacy
 
 - Listings and requests live in `backend/foundit.db`, not in browser storage.
+- The only browser-stored value is the chosen demo username (`foundit.demo-user.v1`), so a reload keeps you signed in. It contains no listings or private notes.
 - Uploaded images are compressed to JPEG data URLs and stored in the listing row.
 - Handover notes are filtered out of public listing responses. They appear only when the viewer is the reporter or has an approved request.
 - The `X-Demo-User` header is a demo mechanism. It is easy to spoof and is **not** authentication.
@@ -266,11 +282,13 @@ Database constraints enforce one request per demo identity per listing, at most 
 
 The backend seeds eight sample reports and two sample requests, all labelled **Sample**, only when the listings table is empty. Two sample reports (`sample-headphones` and `sample-notebook`) are owned by `demo-me`, so the approval flow can be tried immediately from My Activity.
 
+The eight sample photos are AI-generated seller-style images made for this demo: casual phone-style shots of second-hand items on desks, benches and campus surfaces. They are not real listings, real students, or photos taken from marketplace websites, and no real personal data appears in them.
+
 Restarting the server does not duplicate seeds and does not reset user-created rows.
 
 ## Current limitations
 
-- **Demo identity, not authentication:** the header is spoofable; there are no accounts, passwords, or verified MAIT identities.
+- **Demo identity, not authentication:** the sign-in page chooses a spoofable username; there are no accounts, passwords, sessions, or verified MAIT identities.
 - **No production security:** there is no rate limiting, moderation, audit log, HTTPS setup, or hardened deployment.
 - **SQLite demo scale:** suitable for a single demo server, not concurrent campus-wide traffic.
 - **Image storage in SQLite:** uploads are compressed data URLs stored in the database, which is not a real media pipeline.
@@ -282,4 +300,4 @@ Restarting the server does not duplicate seeds and does not reset user-created r
 
 ## Status
 
-FoundIt is a working full-stack prototype: the React frontend talks only to the FastAPI demo API, data survives backend restarts, the seeded review flow works end to end, and the build and lint pass. Production use would require real authentication, authorization review, image hosting, moderation, and a managed database.
+FoundIt is a working full-stack prototype: the React frontend talks only to the FastAPI demo API, data survives backend restarts, a demo sign-in page switches between seeded identities, the seeded review flow works end to end, and the build and lint pass. Production use would require real authentication, authorization review, image hosting, moderation, and a managed database.

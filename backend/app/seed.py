@@ -27,7 +27,7 @@ SAMPLE_LISTINGS = [
         "event_date": date(2026, 10, 29),
         "created_at": _dt("2026-10-30T09:25:00+05:30"),
         "image": "/images/items/headphones.jpg",
-        "image_alt": "Matte black wireless over-ear headphones resting on a cream fabric surface",
+        "image_alt": "Matte black wireless over-ear headphones folded on a scuffed computer-lab desk beside a keyboard",
         "handover_note": (
             "Library entrance, weekdays between 2 and 4 PM. Please describe the "
             "headphones before the handover."
@@ -49,7 +49,7 @@ SAMPLE_LISTINGS = [
         "event_date": date(2026, 10, 29),
         "created_at": _dt("2026-10-30T08:10:00+05:30"),
         "image": "/images/items/calculator.jpg",
-        "image_alt": "Black scientific calculator on a light wooden desk",
+        "image_alt": "Black scientific calculator with a blank sticker on a classroom desk beside a graph-paper notebook",
         "handover_note": (
             "Can collect from C-204 after any weekday class, or meet near the canteen at lunch."
         ),
@@ -70,7 +70,7 @@ SAMPLE_LISTINGS = [
         "event_date": date(2026, 10, 29),
         "created_at": _dt("2026-10-29T18:40:00+05:30"),
         "image": "/images/items/backpack.jpg",
-        "image_alt": "Charcoal grey canvas backpack on a pale concrete bench",
+        "image_alt": "Charcoal grey canvas backpack on a weathered concrete bench on campus",
         "handover_note": (
             "Ask at the canteen counter after 1 PM, then message me to confirm the details."
         ),
@@ -91,7 +91,7 @@ SAMPLE_LISTINGS = [
         "event_date": date(2026, 10, 29),
         "created_at": _dt("2026-10-29T17:05:00+05:30"),
         "image": "/images/items/bottle.jpg",
-        "image_alt": "Brushed stainless steel water bottle with a matte black cap",
+        "image_alt": "Brushed stainless steel water bottle with a matte black cap on a concrete bench",
         "handover_note": (
             "Collect from the sports office between 4 and 6 PM. I can meet by the court "
             "if that is easier."
@@ -135,7 +135,7 @@ SAMPLE_LISTINGS = [
         "event_date": date(2026, 10, 26),
         "created_at": _dt("2026-10-27T09:30:00+05:30"),
         "image": "/images/items/wallet.jpg",
-        "image_alt": "Brown leather bifold wallet on a textured concrete block",
+        "image_alt": "Brown leather bifold wallet on a concrete kerb near a campus car park",
         "handover_note": (
             "Please hand it to the Block A security desk, or message me to meet near the main gate."
         ),
