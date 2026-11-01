@@ -568,8 +568,8 @@ export function ActivityPage() {
           <h1 className="display-lg mt-2">Your corner of the board.</h1>
           <p className="mt-3 flex items-start gap-2 text-[12.5px] leading-5 text-ink-muted">
             <Database aria-hidden="true" size={13} className="mt-0.5 shrink-0 text-ink-faint" />
-            Reports and requests are stored in the FoundIt demo database. Everyone running this
-            demo sees the same board.
+            Listings are shared through the FoundIt demo database. Your requests and the requests
+            on your reports stay tied to the demo identity you signed in with.
           </p>
         </div>
         <Link to="/report" className="btn-primary w-fit shrink-0">

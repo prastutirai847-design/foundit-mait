@@ -1,13 +1,11 @@
+import { getCurrentDemoUser } from '../auth/demoIdentity'
+
 const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined
 
 export const API_BASE_URL = (configuredBaseUrl ?? 'http://127.0.0.1:8000/api').replace(
   /\/$/,
   '',
 )
-
-// The demo identity is intentionally simple and spoofable. The backend
-// enforces ownership against this value, but it is not real authentication.
-export const DEMO_USER_ID = 'demo-me'
 
 export class ApiError extends Error {
   status: number
@@ -50,8 +48,12 @@ export async function apiRequest<T>(
   path: string,
   options: RequestOptions = {},
 ): Promise<T> {
-  const headers: Record<string, string> = {
-    'X-Demo-User': DEMO_USER_ID,
+  const demoUser = getCurrentDemoUser()
+  const headers: Record<string, string> = {}
+  if (demoUser) {
+    // Demo identity, not authentication. The backend checks ownership against
+    // this value, but any client can choose a different one.
+    headers['X-Demo-User'] = demoUser
   }
 
   let body: string | undefined

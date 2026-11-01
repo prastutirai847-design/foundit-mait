@@ -156,7 +156,7 @@ export function DiscoverPage() {
             </div>
 
             <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2.5 text-[12px] text-ink-muted">
-              {['No account needed', 'Private handover notes', 'Built for campus handovers'].map(
+              {['Demo sign-in only', 'Private handover notes', 'Built for campus handovers'].map(
                 (item) => (
                   <li key={item} className="inline-flex items-center gap-1.5">
                     <Check aria-hidden="true" size={12.5} strokeWidth={2.4} className="text-found" />

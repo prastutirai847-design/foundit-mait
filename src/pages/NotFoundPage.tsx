@@ -14,8 +14,7 @@ export function NotFoundPage() {
         <p className="eyebrow mt-6">Error 404</p>
         <h1 className="display-lg mt-2">This page isn&apos;t on the map.</h1>
         <p className="mx-auto mt-3 max-w-sm text-[13.5px] leading-6 text-ink-muted">
-          The link may be broken, or this report may have been removed from the board in this
-          browser.
+          The link may be broken, or this report may have been removed from the demo board.
         </p>
         <div className="mt-7 flex flex-col justify-center gap-2.5 sm:flex-row">
           <Link to="/" className="btn-primary justify-center">

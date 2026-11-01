@@ -106,8 +106,8 @@ export function Footer() {
               <Database aria-hidden="true" size={14} className="mt-0.5 shrink-0" />
               <span>
                 FoundIt is a working prototype with a FastAPI demo backend and a SQLite database.
-                The demo identity is a plain request header and is not authentication. Handover
-                notes are only returned to the reporter or an approved claimant.
+                The demo identity chosen at sign-in is a plain request header, not authentication.
+                Handover notes are only returned to the reporter or an approved claimant.
               </span>
             </p>
             <p>
